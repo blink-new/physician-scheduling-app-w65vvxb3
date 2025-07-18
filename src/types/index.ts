@@ -13,17 +13,16 @@ export interface Physician {
 
 export interface Shift {
   id: string
-  physicianId: string
-  title: string
-  startTime: string
-  endTime: string
+  physician_id: string
+  physician_name: string
+  specialty: string
+  start_time: string
+  end_time: string
   date: string
-  type: 'regular' | 'emergency' | 'on-call' | 'surgery'
-  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled'
+  type: 'regular' | 'emergency' | 'surgery' | 'on-call'
+  status: 'scheduled' | 'confirmed' | 'cancelled'
   location: string
-  notes?: string
-  createdAt: string
-  userId: string
+  notes: string
 }
 
 export interface Availability {
