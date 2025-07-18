@@ -217,6 +217,19 @@ export function SchedulePage() {
           status: 'confirmed',
           location: 'Operating Room 3',
           notes: 'Cardiac surgery scheduled'
+        },
+        {
+          id: '4',
+          physician_id: '1',
+          physician_name: 'Dr. Sarah Johnson',
+          specialty: 'Cardiology',
+          start_time: '09:00',
+          end_time: '17:00',
+          date: format(new Date(2024, 0, 17), 'yyyy-MM-dd'),
+          type: 'regular',
+          status: 'confirmed',
+          location: 'Cardiology Wing',
+          notes: 'Regular cardiology rounds'
         }
       ])
     }
