@@ -453,13 +453,29 @@ export function SchedulePage() {
     return ''
   }
 
-  const getShiftColor = (type: string) => {
-    switch (type) {
-      case 'regular': return 'bg-blue-100 border-blue-300 text-blue-800'
-      case 'emergency': return 'bg-red-100 border-red-300 text-red-800'
-      case 'surgery': return 'bg-purple-100 border-purple-300 text-purple-800'
-      case 'on-call': return 'bg-orange-100 border-orange-300 text-orange-800'
-      default: return 'bg-gray-100 border-gray-300 text-gray-800'
+  const getShiftColor = (type: string, status: string) => {
+    // Use explicit class names to ensure Tailwind includes them
+    const colorMap = {
+      'regular-confirmed': 'bg-blue-200 border-blue-400 text-blue-900 shadow-sm',
+      'regular-scheduled': 'bg-blue-100 border-blue-300 text-blue-800 border-dashed',
+      'emergency-confirmed': 'bg-red-200 border-red-400 text-red-900 shadow-sm',
+      'emergency-scheduled': 'bg-red-100 border-red-300 text-red-800 border-dashed',
+      'surgery-confirmed': 'bg-purple-200 border-purple-400 text-purple-900 shadow-sm',
+      'surgery-scheduled': 'bg-purple-100 border-purple-300 text-purple-800 border-dashed',
+      'on-call-confirmed': 'bg-orange-200 border-orange-400 text-orange-900 shadow-sm',
+      'on-call-scheduled': 'bg-orange-100 border-orange-300 text-orange-800 border-dashed',
+    }
+    
+    const key = `${type}-${status}` as keyof typeof colorMap
+    return colorMap[key] || 'bg-gray-100 border-gray-300 text-gray-800 opacity-60'
+  }
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'confirmed': return 'bg-green-100 text-green-800 border-green-300'
+      case 'scheduled': return 'bg-yellow-100 text-yellow-800 border-yellow-300'
+      case 'cancelled': return 'bg-red-100 text-red-800 border-red-300'
+      default: return 'bg-gray-100 text-gray-800 border-gray-300'
     }
   }
 
@@ -674,15 +690,17 @@ export function SchedulePage() {
                           <div className="flex-1 ml-4">
                             {currentShift ? (
                               <DraggableShift shift={currentShift}>
-                                <div className={`p-3 rounded-lg border ${getShiftColor(currentShift.type)}`}>
+                                <div className={`p-3 rounded-lg border-2 ${getShiftColor(currentShift.type, currentShift.status)}`}>
                                   <div className="font-medium">{currentShift.physician_name}</div>
                                   <div className="text-sm opacity-75">{currentShift.specialty}</div>
                                   <div className="text-sm opacity-75">
                                     {currentShift.start_time} - {currentShift.end_time}
                                   </div>
                                   <div className="flex items-center justify-between mt-2">
-                                    <Badge variant="outline">
-                                      {currentShift.status}
+                                    <Badge className={`text-xs font-medium border ${getStatusBadgeColor(currentShift.status)}`}>
+                                      {currentShift.status === 'confirmed' ? '✓ Confirmed' : 
+                                       currentShift.status === 'scheduled' ? '⏱ Scheduled' : 
+                                       currentShift.status}
                                     </Badge>
                                     {currentShift.location && (
                                       <div className="flex items-center text-xs text-gray-500">
@@ -758,7 +776,7 @@ export function SchedulePage() {
                               <div className="bg-white p-1 min-h-[40px] relative">
                                 {currentShift && (
                                   <DraggableShift shift={currentShift}>
-                                    <div className={`absolute inset-1 rounded p-2 border ${getShiftColor(currentShift.type)}`}>
+                                    <div className={`absolute inset-1 rounded p-2 border-2 ${getShiftColor(currentShift.type, currentShift.status)}`}>
                                       <div className="text-xs font-medium truncate">
                                         {currentShift.physician_name}
                                       </div>
@@ -767,6 +785,11 @@ export function SchedulePage() {
                                       </div>
                                       <div className="text-xs opacity-75">
                                         {currentShift.start_time}-{currentShift.end_time}
+                                      </div>
+                                      <div className="mt-1">
+                                        <Badge className={`text-xs px-1 py-0 ${getStatusBadgeColor(currentShift.status)}`}>
+                                          {currentShift.status === 'confirmed' ? '✓' : '⏱'}
+                                        </Badge>
                                       </div>
                                     </div>
                                   </DraggableShift>
@@ -827,10 +850,15 @@ export function SchedulePage() {
                               {dayShifts.slice(0, 3).map((shift) => (
                                 <div
                                   key={shift.id}
-                                  className={`text-xs p-1 rounded border ${getShiftColor(shift.type)}`}
+                                  className={`text-xs p-1 rounded border-2 ${getShiftColor(shift.type, shift.status)}`}
                                 >
-                                  <div className="font-medium truncate">
-                                    {shift.physician_name.split(' ').slice(-1)[0]}
+                                  <div className="flex items-center justify-between">
+                                    <div className="font-medium truncate">
+                                      {shift.physician_name.split(' ').slice(-1)[0]}
+                                    </div>
+                                    <div className="text-xs">
+                                      {shift.status === 'confirmed' ? '✓' : '⏱'}
+                                    </div>
                                   </div>
                                   <div className="opacity-75">
                                     {shift.start_time}
@@ -857,24 +885,44 @@ export function SchedulePage() {
         {/* Legend */}
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-gray-900">Shift Types</h3>
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
-                  <span className="text-sm text-gray-600">Regular</span>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-gray-900">Shift Types</h3>
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
+                    <span className="text-sm text-gray-600">Regular</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-red-100 border border-red-300 rounded"></div>
+                    <span className="text-sm text-gray-600">Emergency</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-purple-100 border border-purple-300 rounded"></div>
+                    <span className="text-sm text-gray-600">Surgery</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-orange-100 border border-orange-300 rounded"></div>
+                    <span className="text-sm text-gray-600">On-Call</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-red-100 border border-red-300 rounded"></div>
-                  <span className="text-sm text-gray-600">Emergency</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-purple-100 border border-purple-300 rounded"></div>
-                  <span className="text-sm text-gray-600">Surgery</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-orange-100 border border-orange-300 rounded"></div>
-                  <span className="text-sm text-gray-600">On-Call</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-gray-900">Status</h3>
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
+                    <span className="text-sm text-gray-600">✓ Confirmed</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-yellow-100 border border-yellow-300 rounded border-dashed"></div>
+                    <span className="text-sm text-gray-600">⏱ Scheduled</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="text-xs text-gray-500">Solid border = Confirmed</div>
+                    <div className="text-xs text-gray-500">Dashed border = Scheduled</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -907,11 +955,16 @@ export function SchedulePage() {
       {/* Drag Overlay */}
       <DragOverlay>
         {draggedShift && (
-          <div className={`p-3 rounded-lg border ${getShiftColor(draggedShift.type)} opacity-90 shadow-lg`}>
+          <div className={`p-3 rounded-lg border-2 ${getShiftColor(draggedShift.type, draggedShift.status)} opacity-90 shadow-lg`}>
             <div className="font-medium">{draggedShift.physician_name}</div>
             <div className="text-sm opacity-75">{draggedShift.specialty}</div>
             <div className="text-sm opacity-75">
               {draggedShift.start_time} - {draggedShift.end_time}
+            </div>
+            <div className="mt-2">
+              <Badge className={`text-xs ${getStatusBadgeColor(draggedShift.status)}`}>
+                {draggedShift.status === 'confirmed' ? '✓ Confirmed' : '⏱ Scheduled'}
+              </Badge>
             </div>
           </div>
         )}
