@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -20,7 +22,8 @@ import {
   User,
   MapPin,
   Save,
-  X
+  X,
+  CalendarDays
 } from 'lucide-react'
 import { 
   format, 
@@ -133,6 +136,7 @@ export function SchedulePage() {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ time: string; date: Date } | null>(null)
   const [draggedShift, setDraggedShift] = useState<Shift | null>(null)
   const [conflicts, setConflicts] = useState<ConflictInfo[]>([])
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
   const [formData, setFormData] = useState<ShiftFormData>({
     physicianId: '',
     date: '',
@@ -441,6 +445,13 @@ export function SchedulePage() {
     }
   }
 
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setCurrentDate(date)
+      setIsDatePickerOpen(false)
+    }
+  }
+
   const getDateRangeText = () => {
     if (view === 'day') {
       return format(currentDate, 'EEEE, MMMM d, yyyy')
@@ -627,15 +638,44 @@ export function SchedulePage() {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <h2 className="text-lg font-semibold">
-                  {getDateRangeText()}
-                </h2>
+                <div className="flex items-center space-x-3">
+                  <h2 className="text-lg font-semibold">
+                    {getDateRangeText()}
+                  </h2>
+                  <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                      >
+                        <CalendarDays className="w-4 h-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={currentDate}
+                        onSelect={handleDateSelect}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => navigate('next')}
                 >
                   <ChevronRight className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentDate(new Date())}
+                  className="ml-2"
+                >
+                  Today
                 </Button>
               </div>
               <div className="flex items-center space-x-2">
