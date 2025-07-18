@@ -24,7 +24,7 @@ export function ShiftsPage() {
       title: 'Morning Cardiology Rounds',
       physician: 'Dr. Sarah Johnson',
       specialty: 'Cardiology',
-      date: '2024-01-18',
+      date: '2024-01-17',
       startTime: '08:00',
       endTime: '16:00',
       type: 'regular',
